@@ -1,0 +1,98 @@
+# -------------------------------
+# Simple Hybrid Movie Recommendation System
+# -------------------------------
+
+# Sample movie dataset with genres (for content-based)
+movies = {
+    "Titanic": ["Romance", "Drama"],
+    "Avatar": ["Action", "Sci-Fi"],
+    "Inception": ["Action", "Sci-Fi", "Thriller"],
+    "The Notebook": ["Romance", "Drama"],
+    "Interstellar": ["Sci-Fi", "Adventure"]
+}
+
+# Sample user ratings dataset (for collaborative filtering)
+ratings = {
+    "U1": {"Titanic": 5, "Avatar": 4, "Inception": 5},
+    "U2": {"Titanic": 4, "Inception": 5, "Avatar": 2},
+    "U3": {"Titanic": 3, "Inception": 4, "Avatar": 5},
+    "U4": {"Titanic": 2, "Avatar": 5}
+}
+
+# -------------------------------
+# Content-Based Recommendation
+# -------------------------------
+def recommend_movies_content_based(user_likes, movies):
+    recommendations = {}
+    liked_genres = set()
+    for movie in user_likes:
+        liked_genres.update(movies[movie])
+    
+    for movie, genres in movies.items():
+        if movie not in user_likes:
+            score = len(liked_genres.intersection(genres))
+            if score > 0:
+                recommendations[movie] = score
+    
+    # Sort by score descending
+    recommendations = dict(sorted(recommendations.items(), key=lambda x: x[1], reverse=True))
+    return recommendations
+
+# -------------------------------
+# Collaborative Filtering Recommendation
+# -------------------------------
+def recommend_movies_collab(user, ratings):
+    all_movies = set()
+    for ratings_dict in ratings.values():
+        all_movies.update(ratings_dict.keys())
+    
+    unrated_movies = all_movies - set(ratings[user].keys())
+    recommendations = {}
+    
+    for movie in unrated_movies:
+        total = count = 0
+        for other_user, other_ratings in ratings.items():
+            if other_user != user and movie in other_ratings:
+                total += other_ratings[movie]
+                count += 1
+        if count > 0:
+            recommendations[movie] = round(total/count, 2)
+    
+    # Sort descending by predicted rating
+    recommendations = dict(sorted(recommendations.items(), key=lambda x: x[1], reverse=True))
+    return recommendations
+
+# -------------------------------
+# Main Program
+# -------------------------------
+print("=== Hybrid Movie Recommendation System ===")
+user_input = input("Enter your username (U1-U4): ").strip()
+
+# Check if user exists in ratings dataset
+if user_input not in ratings:
+    print(f"User {user_input} not found. Using sample favorites for content-based demo.")
+    # Just pick some favorite movies for content-based
+    user_favorites = ["Titanic", "Inception"]
+else:
+    user_favorites = list(ratings[user_input].keys())
+
+print(f"\nUser favorites: {user_favorites}")
+
+# Content-Based Recommendations
+content_rec = recommend_movies_content_based(user_favorites, movies)
+print("\nContent-Based Recommendations (based on genres):")
+if content_rec:
+    for movie, score in content_rec.items():
+        print(f"{movie} -> similarity score: {score}")
+else:
+    print("No content-based recommendations available.")
+
+# Collaborative Filtering Recommendations
+if user_input in ratings:
+    collab_rec = recommend_movies_collab(user_input, ratings)
+    print("\nCollaborative Filtering Recommendations (based on similar users):")
+    if collab_rec:
+        for movie, rating in collab_rec.items():
+            print(f"{movie} -> predicted rating: {rating}")
+    else:
+        print("No collaborative recommendations available.")

@@ -1,0 +1,57 @@
+# ============================================
+# CLEAN IMAGE CAPTIONING (NO pip messages)
+# Upload → Display → Caption
+# ============================================
+
+# Suppress pip output
+import sys
+import subprocess
+
+def install(package):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", package], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+# Install required packages silently
+install("transformers")
+install("torch")
+install("torchvision")
+install("pillow")
+
+# ---------------------------
+# Imports
+# ---------------------------
+from transformers import BlipProcessor, BlipForConditionalGeneration
+from PIL import Image
+from google.colab import files
+from IPython.display import display
+import torch
+
+# ---------------------------
+# Load Pre-trained Model
+# ---------------------------
+processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
+model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base").to("cpu")
+
+# ---------------------------
+# Upload Image
+# ---------------------------
+print("📤 Please upload an image:")
+uploaded = files.upload()
+image_path = list(uploaded.keys())[0]
+
+# Display uploaded image
+image = Image.open(image_path).convert("RGB")
+print("\n🖼️ Uploaded Image:")
+display(image)
+
+# ---------------------------
+# Generate Caption
+# ---------------------------
+inputs = processor(image, return_tensors="pt")
+with torch.no_grad():
+    out = model.generate(**inputs, max_new_tokens=30)
+
+caption = processor.decode(out[0], skip_special_tokens=True)
+
+# Print final caption
+print("\n📝 Generated Caption:")
+print(caption)

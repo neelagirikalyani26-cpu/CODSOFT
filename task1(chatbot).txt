@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI Chatbot with Voice</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg,#dbeafe,#e0f2fe);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    margin:0;
+}
+
+.chatbot{
+    width:380px;
+    background:#fff;
+    border-radius:15px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.2);
+    overflow:hidden;
+}
+
+.header{
+    background:#2563eb;
+    color:white;
+    padding:15px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.header img{
+    width:40px;
+}
+
+#chat{
+    height:320px;
+    padding:15px;
+    overflow-y:auto;
+    background:#f8fafc;
+}
+
+.msg{
+    margin-bottom:12px;
+    max-width:75%;
+    padding:10px;
+    border-radius:12px;
+    font-size:14px;
+    word-wrap:break-word;
+}
+
+.user{
+    background:#2563eb;
+    color:white;
+    margin-left:auto;
+}
+
+.bot{
+    background:#e5e7eb;
+}
+
+.input-area{
+    display:flex;
+    align-items:center;
+    border-top:1px solid #ddd;
+}
+
+input[type="text"]{
+    flex:1;
+    padding:12px;
+    border:none;
+    outline:none;
+}
+
+button{
+    padding:12px;
+    border:none;
+    background:#2563eb;
+    color:white;
+    cursor:pointer;
+}
+
+.attach, .voice{
+    background:#e5e7eb;
+    color:black;
+    margin-right:5px;
+}
+
+.preview{
+    max-width:100%;
+    margin-top:6px;
+    border-radius:8px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="chatbot">
+    <div class="header">
+        <img src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png">
+        <h3>AI Chatbot</h3>
+    </div>
+
+    <div id="chat">
+        <div class="msg bot">Hello! I am your AI assistant 🤖</div>
+    </div>
+
+    <div class="input-area">
+        <button class="attach" onclick="document.getElementById('file').click()">📎</button>
+        <input type="file" id="file" hidden onchange="sendFile(this.files[0])">
+
+        <input type="text" id="input" placeholder="Type a message...">
+
+        <button class="voice" onclick="startVoice()">🎤</button>
+        <button onclick="send()">Send</button>
+    </div>
+</div>
+
+<script>
+const chat = document.getElementById("chat");
+
+// Add message to chat
+function addMessage(text, sender){
+    const div = document.createElement("div");
+    div.className = "msg " + sender;
+    div.innerText = text;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+// AI reply logic
+function processReply(text){
+    text = text.toLowerCase();
+    let reply = "Sorry, I didn't understand. 🤔";
+
+    const responses = {
+        "hi": "Hello! How can I help you?",
+        "hello": "Hi there 👋",
+        "how are you": "I'm doing great 😊",
+        "what is ai": "AI stands for Artificial Intelligence.",
+        "machine learning": "Machine Learning allows systems to learn from data.",
+        "difference between ai and ml": "AI is a broad concept, ML is a subset of AI.",
+        "what is nlp": "NLP helps computers understand human language.",
+        "chatbot": "A chatbot is a program that communicates with users.",
+        "best language for ai": "Python is the most popular language for AI.",
+        "career": "AI careers include AI Engineer, ML Engineer, and Data Scientist.",
+        "bye": "Goodbye! Have a nice day 🚀"
+    };
+
+    for(let key in responses){
+        if(text.includes(key)){
+            reply = responses[key];
+            break;
+        }
+    }
+
+    setTimeout(() => addMessage(reply, "bot"), 300);
+}
+
+// Send text
+function send(){
+    const input = document.getElementById("input");
+    const text = input.value.trim();
+    if(!text) return;
+
+    addMessage(text, "user");
+    processReply(text);
+    input.value = "";
+}
+
+// File upload
+function sendFile(file){
+    if(!file) return;
+
+    const box = document.createElement("div");
+    box.className = "msg user";
+
+    if(file.type.startsWith("image/")){
+        box.innerText = "📷 Image:";
+        const img = document.createElement("img");
+        img.src = URL.createObjectURL(file);
+        img.className = "preview";
+        box.appendChild(img);
+    } else {
+        box.innerText = "📄 File: " + file.name;
+    }
+
+    chat.appendChild(box);
+    chat.scrollTop = chat.scrollHeight;
+
+    setTimeout(() => addMessage("File received successfully 👍", "bot"), 300);
+}
+
+// Voice recognition
+function startVoice(){
+    if(!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)){
+        addMessage("⚠️ Voice recognition not supported in this browser.", "bot");
+        return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.start();
+
+    addMessage("🎤 Listening...", "bot");
+
+    recognition.onresult = function(event){
+        const transcript = event.results[0][0].transcript;
+        addMessage(transcript, "user");
+        processReply(transcript);
+    };
+
+    recognition.onerror = function(event){
+        addMessage("Voice error: " + event.error, "bot");
+    };
+}
+</script>
+
+</body>
+</html>
